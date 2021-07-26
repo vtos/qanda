@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 
 use App\Domain\CreateQuestion\CreateQuestion;
 use App\Domain\CreateQuestion\CreateQuestionHandler;
+use App\Domain\ListQuestions\GetQuestions;
 use Illuminate\Console\Command;
 
 class QandaInteractive extends Command
@@ -23,6 +24,8 @@ class QandaInteractive extends Command
     private const MAIN_MENU_EXIT_OPTION = 6;
 
     private CreateQuestionHandler $createQuestionHandler;
+
+    private GetQuestions $getQuestions;
 
     /**
      * The name and signature of the console command.
@@ -43,9 +46,12 @@ class QandaInteractive extends Command
      *
      * @return void
      */
-    public function __construct(CreateQuestionHandler $createQuestionHandler)
-    {
+    public function __construct(
+        CreateQuestionHandler $createQuestionHandler,
+        GetQuestions $getQuestions
+    ) {
         $this->createQuestionHandler = $createQuestionHandler;
+        $this->getQuestions = $getQuestions;
 
         parent::__construct();
     }
@@ -87,13 +93,10 @@ class QandaInteractive extends Command
                     'Questions',
                     'Answers',
                 ],
-                [
-                    [
-                        'Text',
-                        'Answer'
-                    ],
-                ]
+                $this->getQuestions->all()->toArray()
             );
+
+            return 0;
         }
 
         return 0;
