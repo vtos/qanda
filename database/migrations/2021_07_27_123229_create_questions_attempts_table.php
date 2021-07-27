@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateQuestionsPracticeTable extends Migration
+class CreateQuestionsAttemptsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,7 +13,7 @@ class CreateQuestionsPracticeTable extends Migration
      */
     public function up()
     {
-        Schema::create('questions_practice', function (Blueprint $table) {
+        Schema::create('questions_attempts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('question_id')->constrained();
             $table->string('user_answer');
@@ -29,6 +29,6 @@ class CreateQuestionsPracticeTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('questions_practice');
+        Schema::dropIfExists('questions_attempts');
     }
 }

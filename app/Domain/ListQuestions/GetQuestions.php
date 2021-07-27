@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\ListQuestions;
 
-use App\Models\Read\Question as ReadQuestion;
 use Illuminate\Database\Eloquent\Collection;
+use App\Models\Read\Question as ReadQuestion;
 
 final class GetQuestions
 {
@@ -20,5 +20,10 @@ final class GetQuestions
                 'question_answer',
             ]
         );
+    }
+
+    public function attempts(): Collection
+    {
+
     }
 }

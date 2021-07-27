@@ -11,5 +11,14 @@ class Question extends Model
 {
     use HasFactory;
 
-    
+    public function attempt()
+    {
+        return $this->hasOne(QuestionAttempt::class)
+            ->withDefault(
+                [
+                    'user_answer' => '',
+                    'status' => 'not_answered', // TODO: use status value object instead.
+                ]
+            );
+    }
 }

@@ -99,6 +99,12 @@ class QandaInteractive extends Command
             return 0;
         }
 
+        if (self::MAIN_MENU_PRACTICE_OPTION === $optionValue) {
+            $this->line('<fg=white>Let\'s practice!</>');
+
+            $this->getQuestions->attempts();
+        }
+
         return 0;
     }
 
