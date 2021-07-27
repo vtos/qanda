@@ -10,9 +10,9 @@ use App\Models\Question;
 final class GetQuestions
 {
     /**
-     * Returns a collection of read models for questions.
+     * Returns a collection of read models for questions listing.
      */
-    public function all(): Collection
+    public function all(): Collection // TODO: extend this class to have a specific collection defined?
     {
         return Question::all(
             [
