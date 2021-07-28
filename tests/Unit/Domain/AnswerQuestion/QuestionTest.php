@@ -31,8 +31,9 @@ class QuestionTest extends TestCase
      */
     public function it_properly_changes_answer_status_when_it_is_answered(): void
     {
-        $question = Question::notAnswered(
-            AnswerText::fromString('The correct answer.')
+        $question = new Question(
+            AnswerText::fromString('The correct answer.'),
+            AnswerStatus::notAnswered()
         );
 
         // Fail it.

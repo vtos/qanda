@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateQuestionsAttemptsTable extends Migration
+class AddQuestionIdUniqueIndex extends Migration
 {
     /**
      * Run the migrations.
@@ -13,13 +13,7 @@ class CreateQuestionsAttemptsTable extends Migration
      */
     public function up()
     {
-        Schema::create('questions_attempts', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('question_id')->constrained();
-            $table->string('user_answer');
-            $table->string('status');
-            $table->timestamps();
-
+        Schema::table('questions_attempts', function(Blueprint $table) {
             $table->unique('question_id');
         });
     }
@@ -31,6 +25,8 @@ class CreateQuestionsAttemptsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('questions_attempts');
+        Schema::table('questions_attempts', function(Blueprint $table) {
+            $table->dropUnique('question_id');
+        });
     }
 }

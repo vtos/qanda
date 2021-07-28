@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Domain\AnswerQuestion\AnswerQuestion;
+use App\Domain\AnswerQuestion\AnswerQuestionHandler;
+use App\Domain\AnswerQuestion\CouldNotAnswerQuestion;
 use App\Domain\CreateQuestion\CreateQuestion;
 use App\Domain\CreateQuestion\CreateQuestionHandler;
-use App\Domain\ListQuestions\GetQuestions;
+use App\Models\Question;
 use Illuminate\Console\Command;
 
 class QandaInteractive extends Command
@@ -25,7 +28,7 @@ class QandaInteractive extends Command
 
     private CreateQuestionHandler $createQuestionHandler;
 
-    private GetQuestions $getQuestions;
+    private AnswerQuestionHandler $answerQuestionHandler;
 
     /**
      * The name and signature of the console command.
@@ -48,10 +51,10 @@ class QandaInteractive extends Command
      */
     public function __construct(
         CreateQuestionHandler $createQuestionHandler,
-        GetQuestions $getQuestions
+        AnswerQuestionHandler $answerQuestionHandler
     ) {
         $this->createQuestionHandler = $createQuestionHandler;
-        $this->getQuestions = $getQuestions;
+        $this->answerQuestionHandler = $answerQuestionHandler;
 
         parent::__construct();
     }
@@ -89,10 +92,10 @@ class QandaInteractive extends Command
             $this->line('<fg=white>Q&A List</>');
             $this->table(
                 [
-                    'Questions',
-                    'Answers',
+                    'Question Text',
+                    'Answer',
                 ],
-                $this->getQuestions->all()->toArray()
+                Question::list()->get()
             );
 
         }
@@ -103,14 +106,16 @@ class QandaInteractive extends Command
             $this->line('<fg=white>Current progress:</>');
 
             // TODO: put this into separate method.
-            $questions = $this->getQuestions->withAttempts();
+            $questions = Question::answers()->get();
 
             $questionsAsArray = [];
             $questionsNumIdMap = [];
+            $questionsNumTextMap = [];
             foreach ($questions as $question) {
                 $questionNum = count($questionsAsArray) + 1;
 
                 $questionsNumIdMap[$questionNum] = $question->id;
+                $questionsNumTextMap[$questionNum] = $question->question_text;
 
                 $questionsAsArray[] = [
                     $questionNum,
@@ -135,14 +140,36 @@ class QandaInteractive extends Command
                 $questionNumToPractice = $this->ask(
                     '<fg=white>Pick a question to practice (enter question number from the table above)</>'
                 );
-                if (!array_key_exists($questionNumToPractice, array_keys($questionsNumIdMap))) {
+                if (!in_array($questionNumToPractice, array_keys($questionsNumIdMap))) {
                     $this->error('Unknown question selected.');
                 }
             }
 
-            $questionId = $questionsNumIdMap[$questionNumToPractice];
-            $this->info($questionId);
+            $questionAnswer = $this->ask(
+                sprintf(
+                '<fg=white>%s Type your answer</>',
+                    $questionsNumTextMap[$questionNumToPractice]
+                )
+            );
 
+            try {
+                $answerStatus = $this->answerQuestionHandler->handle(
+                    new AnswerQuestion(
+                        $questionsNumIdMap[$questionNumToPractice],
+                        $questionAnswer
+                    )
+                );
+
+                $this->info(
+                    sprintf(
+                        '<fg=%s>The answer is %s.</>',
+                        $answerStatus->isCorrect() ? 'green' : 'red',
+                        $answerStatus->asString()
+                    )
+                );
+            } catch (CouldNotAnswerQuestion $couldNotAnswerQuestion) {
+                $this->error($couldNotAnswerQuestion->getMessage());
+            }
         }
 
         return 0;

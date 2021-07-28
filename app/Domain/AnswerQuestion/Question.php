@@ -31,12 +31,4 @@ final class Question
     {
         return $this->status;
     }
-
-    public static function notAnswered(AnswerText $correctAnswer): self
-    {
-        return new self(
-            $correctAnswer,
-            AnswerStatus::notAnswered()
-        );
-    }
 }

@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Domain\AnswerQuestion\AnswerStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 
 class Question extends Model
 {
@@ -17,8 +19,42 @@ class Question extends Model
             ->withDefault(
                 [
                     'user_answer' => '',
-                    'status' => 'not_answered', // TODO: use status value object instead.
+                    'status' => AnswerStatus::notAnswered()->asString(),
                 ]
             );
+    }
+
+    /**
+     * A query to list all the created questions.
+     *
+     * @param  Builder $query
+     * @return Builder
+     */
+    public function scopeList(Builder $query): Builder
+    {
+        return $query->select(
+            [
+                'question_text',
+                'question_answer',
+            ]
+        );
+    }
+
+    /**
+     * A query to list all questions with answer attempts.
+     *
+     * @param  Builder $query
+     * @return Builder
+     */
+    public function scopeAnswers(Builder $query): Builder
+    {
+        return $query->with('attempt')->select(
+            [
+                'id',
+                'question_text',
+                'user_answer',
+                'status',
+            ]
+        );
     }
 }

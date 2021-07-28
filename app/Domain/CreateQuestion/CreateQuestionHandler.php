@@ -8,18 +8,12 @@ use App\Models\Question;
 
 final class CreateQuestionHandler
 {
-    private Question $questionModel;
-
-    public function __construct(Question $questionModel)
-    {
-        $this->questionModel = $questionModel;
-    }
-
     public function handle(CreateQuestion $createQuestion): void
     {
-        $this->questionModel->question_text = $createQuestion->questionText();
-        $this->questionModel->question_answer = $createQuestion->questionAnswer();
+        $questionModel = new Question();
+        $questionModel->question_text = $createQuestion->questionText();
+        $questionModel->question_answer = $createQuestion->questionAnswer();
 
-        $this->questionModel->save();
+        $questionModel->save();
     }
 }
