@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\ListQuestions;
 
 use Illuminate\Database\Eloquent\Collection;
-use App\Models\Read\Question as ReadQuestion;
+use App\Models\Question;
 
 final class GetQuestions
 {
@@ -14,7 +14,7 @@ final class GetQuestions
      */
     public function all(): Collection
     {
-        return ReadQuestion::all(
+        return Question::all(
             [
                 'question_text',
                 'question_answer',
@@ -22,8 +22,16 @@ final class GetQuestions
         );
     }
 
-    public function attempts(): Collection
+    public function withAttempts(): Collection
     {
-
+        return Question::with('attempt')
+            ->get(
+                [
+                    'id',
+                    'question_text',
+                    'user_answer',
+                    'status',
+                ]
+            );
     }
 }

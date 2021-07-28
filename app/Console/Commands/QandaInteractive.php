@@ -83,7 +83,6 @@ class QandaInteractive extends Command
                 )
             );
             $this->line('Added successfully.');
-            return 0;
         }
 
         if (self::MAIN_MENU_LIST_QUESTIONS_OPTION === $optionValue) {
@@ -96,13 +95,54 @@ class QandaInteractive extends Command
                 $this->getQuestions->all()->toArray()
             );
 
-            return 0;
         }
 
         if (self::MAIN_MENU_PRACTICE_OPTION === $optionValue) {
             $this->line('<fg=white>Let\'s practice!</>');
+            $this->newLine();
+            $this->line('<fg=white>Current progress:</>');
 
-            $this->getQuestions->attempts();
+            // TODO: put this into separate method.
+            $questions = $this->getQuestions->withAttempts();
+
+            $questionsAsArray = [];
+            $questionsNumIdMap = [];
+            foreach ($questions as $question) {
+                $questionNum = count($questionsAsArray) + 1;
+
+                $questionsNumIdMap[$questionNum] = $question->id;
+
+                $questionsAsArray[] = [
+                    $questionNum,
+                    $question->question_text,
+                    $question->attempt->user_answer,
+                    $question->attempt->status,
+                ];
+            }
+
+            $this->table(
+                [
+                    'Question Num.',
+                    'Question',
+                    'Your Answer',
+                    'Status',
+                ],
+                $questionsAsArray
+            );
+
+            $questionNumToPractice = null;
+            while (is_null($questionNumToPractice) || !array_key_exists($questionNumToPractice, $questionsNumIdMap)) {
+                $questionNumToPractice = $this->ask(
+                    '<fg=white>Pick a question to practice (enter question number from the table above)</>'
+                );
+                if (!array_key_exists($questionNumToPractice, array_keys($questionsNumIdMap))) {
+                    $this->error('Unknown question selected.');
+                }
+            }
+
+            $questionId = $questionsNumIdMap[$questionNumToPractice];
+            $this->info($questionId);
+
         }
 
         return 0;
