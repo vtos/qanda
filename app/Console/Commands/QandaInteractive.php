@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use Illuminate\Console\Command;
+use App\Models\Question;
+use App\Models\QuestionAttempt;
 use App\Domain\AnswerQuestion\AnswerQuestion;
 use App\Domain\AnswerQuestion\AnswerQuestionHandler;
 use App\Domain\AnswerQuestion\CouldNotAnswerQuestion;
 use App\Domain\CreateQuestion\CreateQuestion;
 use App\Domain\CreateQuestion\CreateQuestionHandler;
 use App\Domain\Stats\Percentage;
-use App\Models\Question;
-use App\Models\QuestionAttempt;
-use Illuminate\Console\Command;
 
 class QandaInteractive extends Command
 {
@@ -256,6 +256,8 @@ class QandaInteractive extends Command
             $this->info('Reset aborted.');
             return;
         }
-        $this->info('Deleted.');
+
+        QuestionAttempt::query()->truncate();
+        $this->info('Deleted the progress.');
     }
 }
