@@ -14,7 +14,6 @@ use App\Domain\AnswerQuestion\AnswerQuestionHandler;
 use App\Domain\AnswerQuestion\CouldNotAnswerQuestion;
 use App\Domain\CreateQuestion\CreateQuestion;
 use App\Domain\CreateQuestion\CreateQuestionHandler;
-use App\Domain\AnswerQuestion\AnswerStatus;
 use App\Domain\Stats\Percentage;
 
 class QandaInteractive extends Command
@@ -158,7 +157,7 @@ class QandaInteractive extends Command
         $this->newLine();
         $this->line('Current progress:');
 
-        $questionsCollection = Question::answers()->get();
+        $questionsCollection = Question::withAttempts()->get();
 
         // This map is needed to match the selected question number with its id
         // which is required for further manipulations.
@@ -168,20 +167,20 @@ class QandaInteractive extends Command
             ];
         })->toArray();
 
-        // Get questions in a form which is convenient for passing to the table() method.
-        $questions = Question::answers()->get()->map(function($item, $key) {
+        // Get questions in a form which is convenient for passing to the progressTable() method down below.
+        $questions = $questionsCollection->map(function($item, $key) {
             return [
                 $key + 1,
                 $item->question_text,
                 $item->attempt->user_answer,
                 Str::ucfirst(
-                    Str::replace('_', ' ', $item->attempt->status)
+                    Str::replace('_', ' ', $item->attempt->status->asString())
                 )
             ];
         })->all();
 
         $totalQuestions = Question::all()->count();
-        $correctAnswersTotal = QuestionAttempt::correctCount()->count();
+        $correctAnswersTotal = QuestionAttempt::whereHasCorrectAnswer()->count();
         $this->progressTable(
             $questions,
             sprintf(
@@ -211,7 +210,7 @@ class QandaInteractive extends Command
             }
 
             $questionToPractice = Question::with('attempt')->findOrFail($questionsNumIdMap[$questionNumToPractice]);
-            $hasCorrectAnswerAlready = AnswerStatus::fromString($questionToPractice->attempt->status)->isCorrect();
+            $hasCorrectAnswerAlready = $questionToPractice->attempt->hasCorrectAnswer();
             if ($hasCorrectAnswerAlready) {
                 $this->error('The question has a correct answer already, pick another one, please.');
             }
@@ -260,12 +259,12 @@ class QandaInteractive extends Command
 
         $answeredPercentage = Percentage::fromInts(
             $totalQuestions,
-            QuestionAttempt::answeredCount()->count()
+            QuestionAttempt::whereAnswered()->count()
         )->asInt();
 
         $correctPercentage = Percentage::fromInts(
             $totalQuestions,
-            QuestionAttempt::correctCount()->count(),
+            QuestionAttempt::whereHasCorrectAnswer()->count(),
         )->asInt();
 
         $this->table(
@@ -292,7 +291,7 @@ class QandaInteractive extends Command
             return;
         }
 
-        QuestionAttempt::query()->truncate();
+        QuestionAttempt::truncate();
         $this->info('Deleted the progress.');
     }
 

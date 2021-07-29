@@ -14,8 +14,8 @@ final class Percentage
 
     private function __construct(int $total, int $amount)
     {
-        Assert::nullOrPositiveInteger($total);
-        Assert::nullOrPositiveInteger($amount);
+        Assert::greaterThanEq($total, 0);
+        Assert::greaterThanEq($amount, 0);
         Assert::lessThanEq($amount, $total);
 
         $this->total = $total;

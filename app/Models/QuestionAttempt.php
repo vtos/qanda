@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Domain\AnswerQuestion\AnswerStatus;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use App\Domain\AnswerQuestion\AnswerStatus;
 
 class QuestionAttempt extends Model
 {
@@ -17,13 +16,24 @@ class QuestionAttempt extends Model
         return $this->belongsTo(Question::class);
     }
 
-    public function scopeAnsweredCount(Builder $query): Builder
+    public function newEloquentBuilder($query): QuestionAttemptQueryBuilder
     {
-        return QuestionAttempt::query()->where('status', '<>', AnswerStatus::notAnswered()->asString());
+        return new QuestionAttemptQueryBuilder($query);
     }
 
-    public function scopeCorrectCount(Builder $query): Builder
+    /**
+     * Make use of value object from the domain.
+     */
+    public function getStatusAttribute($value): AnswerStatus
     {
-        return QuestionAttempt::query()->where('status', AnswerStatus::correct()->asString());
+        return AnswerStatus::fromString($value);
+    }
+
+    /**
+     * A shortcut method to make status checking less verbose in the calling code.
+     */
+    public function hasCorrectAnswer(): bool
+    {
+        return $this->status->isCorrect();
     }
 }

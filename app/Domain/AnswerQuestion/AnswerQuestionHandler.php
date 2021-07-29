@@ -15,7 +15,7 @@ final class AnswerQuestionHandler
 
         $question = new Question(
             AnswerText::fromString($questionModel->question_answer),
-            AnswerStatus::fromString($questionModel->attempt->status)
+            $questionModel->attempt->status
         );
         $question->answer(
             AnswerText::fromString($command->answerText())

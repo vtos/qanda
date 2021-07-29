@@ -46,7 +46,7 @@ class Question extends Model
      * @param  Builder $query
      * @return Builder
      */
-    public function scopeAnswers(Builder $query): Builder
+    public function scopeWithAttempts(Builder $query): Builder
     {
         return $query->with('attempt')->select(
             [
