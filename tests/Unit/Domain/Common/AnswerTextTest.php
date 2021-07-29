@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Domain\AnswerQuestion;
+namespace Tests\Unit\Domain\Common;
 
-use App\Domain\AnswerQuestion\AnswerText;
+use App\Domain\Common\AnswerText;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 

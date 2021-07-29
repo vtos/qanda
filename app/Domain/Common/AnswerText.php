@@ -12,7 +12,7 @@ final class AnswerText
 
     private function __construct(string $text)
     {
-        Assert::notEmpty($text);
+        Assert::notWhitespaceOnly($text);
         $this->text = $text;
     }
 

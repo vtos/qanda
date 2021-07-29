@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Unit\Domain\AnswerQuestion;
 
 use PHPUnit\Framework\TestCase;
+use App\Domain\Common\AnswerText;
 use App\Domain\AnswerQuestion\AnswerStatus;
-use App\Domain\AnswerQuestion\AnswerText;
 use App\Domain\AnswerQuestion\CouldNotAnswerQuestion;
 use App\Domain\AnswerQuestion\Question;
 
