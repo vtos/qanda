@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Str;
+use Symfony\Component\Console\Helper\Table;
 use App\Models\Question;
 use App\Models\QuestionAttempt;
 use App\Domain\AnswerQuestion\AnswerQuestion;
@@ -12,6 +14,7 @@ use App\Domain\AnswerQuestion\AnswerQuestionHandler;
 use App\Domain\AnswerQuestion\CouldNotAnswerQuestion;
 use App\Domain\CreateQuestion\CreateQuestion;
 use App\Domain\CreateQuestion\CreateQuestionHandler;
+use App\Domain\AnswerQuestion\AnswerStatus;
 use App\Domain\Stats\Percentage;
 
 class QandaInteractive extends Command
@@ -86,7 +89,8 @@ class QandaInteractive extends Command
                 $this->handleListQuestions();
             }
             if (self::MAIN_MENU_PRACTICE_OPTION === $selectedOption) {
-                $this->handlePractice();
+                // Keep showing the practice dialog until explicitly asked to stop (when 0 is returned)
+                while (1 === $this->handlePractice());
             }
             if (self::MAIN_MENU_STATS_OPTION === $selectedOption) {
                 $this->handleStats();
@@ -97,6 +101,7 @@ class QandaInteractive extends Command
         }
 
         $this->info('Bye!');
+        $this->newLine();
 
         return 0;
     }
@@ -141,61 +146,87 @@ class QandaInteractive extends Command
         );
     }
 
-    private function handlePractice(): void
+    /**
+     * The method returns either 0 or 1. In case the user wants to exit the practice it returns 0. If 1 is returned
+     * the user is presented the practice again.
+     *
+     * @return int
+     */
+    private function handlePractice(): int
     {
         $this->line('Let\'s practice!');
         $this->newLine();
         $this->line('Current progress:');
 
-        // TODO: put this into separate method.
-        $questions = Question::answers()->get();
+        $questionsCollection = Question::answers()->get();
 
-        $questionsAsArray = [];
-        $questionsNumIdMap = [];
-        $questionsNumTextMap = [];
-        foreach ($questions as $question) {
-            $questionNum = count($questionsAsArray) + 1;
-
-            $questionsNumIdMap[$questionNum] = $question->id;
-            $questionsNumTextMap[$questionNum] = $question->question_text;
-
-            $questionsAsArray[] = [
-                $questionNum,
-                $question->question_text,
-                $question->attempt->user_answer,
-                $question->attempt->status,
+        // This map is needed to match the selected question number with its id
+        // which is required for further manipulations.
+        $questionsNumIdMap = $questionsCollection->mapWithKeys(function($item, $key) {
+            return [
+                $item->id => $key + 1,
             ];
-        }
+        })->toArray();
 
-        $this->table(
-            [
-                'Question Num.',
-                'Question',
-                'Your Answer',
-                'Status',
-            ],
-            $questionsAsArray
+        // Get questions in a form which is convenient for passing to the table() method.
+        $questions = Question::answers()->get()->map(function($item, $key) {
+            return [
+                $key + 1,
+                $item->question_text,
+                $item->attempt->user_answer,
+                Str::ucfirst(
+                    Str::replace('_', ' ', $item->attempt->status)
+                )
+            ];
+        })->all();
+
+        $totalQuestions = Question::all()->count();
+        $correctAnswersTotal = QuestionAttempt::correctCount()->count();
+        $this->progressTable(
+            $questions,
+            sprintf(
+                '%s%% (%s / %s)',
+                Percentage::fromInts($totalQuestions, $correctAnswersTotal)->asInt(),
+                $correctAnswersTotal,
+                $totalQuestions
+            )
         );
 
         $questionNumToPractice = null;
-        while (is_null($questionNumToPractice) || !array_key_exists($questionNumToPractice, $questionsNumIdMap)) {
+        $hasCorrectAnswerAlready = false;
+        while (
+            is_null($questionNumToPractice)
+            || !array_key_exists($questionNumToPractice, $questionsNumIdMap)
+            || $hasCorrectAnswerAlready
+        ) {
             $questionNumToPractice = $this->ask(
                 '<fg=white>Pick a question to practice (enter question number from the table above or press Enter to return to the main menu)</>'
             );
-            if ($questionNumToPractice === null) {
-                return;
+            if (is_null($questionNumToPractice)) {
+                // Cancel practice.
+                return 0;
             }
             if (!in_array($questionNumToPractice, array_keys($questionsNumIdMap))) {
                 $this->error('Unknown question selected.');
+            }
+
+            $questionToPractice = Question::with('attempt')->findOrFail($questionsNumIdMap[$questionNumToPractice]);
+            $hasCorrectAnswerAlready = AnswerStatus::fromString($questionToPractice->attempt->status)->isCorrect();
+            if ($hasCorrectAnswerAlready) {
+                $this->error('The question has a correct answer already, pick another one, please.');
             }
         }
 
         $questionAnswer = $this->ask(
             sprintf(
-            '<fg=white>%s Type your answer</>',
-                $questionsNumTextMap[$questionNumToPractice]
+            '<fg=white>%s Type your answer or press Enter to skip</>',
+                $questionToPractice->question_text
             )
         );
+        if (is_null($questionAnswer)) {
+            // Skip question and return to practice progress.
+            return 1;
+        }
 
         try {
             $answerStatus = $this->answerQuestionHandler->handle(
@@ -215,6 +246,10 @@ class QandaInteractive extends Command
         } catch (CouldNotAnswerQuestion $couldNotAnswerQuestion) {
             $this->error($couldNotAnswerQuestion->getMessage());
         }
+
+        $this->newLine();
+
+        return 1;
     }
 
     private function handleStats(): void
@@ -259,5 +294,22 @@ class QandaInteractive extends Command
 
         QuestionAttempt::query()->truncate();
         $this->info('Deleted the progress.');
+    }
+
+    private function progressTable(array $rows, string $footer): void
+    {
+        $table = new Table($this->output);
+        $table->setHeaders(
+            [
+                'Question Num.',
+                'Question',
+                'Your Answer',
+                'Status',
+            ]
+        );
+        $table->setRows($rows);
+        $table->setFooterTitle($footer);
+
+        $table->render();
     }
 }
