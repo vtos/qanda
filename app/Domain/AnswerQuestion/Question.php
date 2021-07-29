@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\AnswerQuestion;
 
+use App\Domain\Common\AnswerText;
+
 final class Question
 {
     private AnswerText $correctAnswer;

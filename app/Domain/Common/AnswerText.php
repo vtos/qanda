@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Domain\AnswerQuestion;
+namespace App\Domain\Common;
 
-use InvalidArgumentException;
+use Webmozart\Assert\Assert;
 
 final class AnswerText
 {
@@ -12,9 +12,7 @@ final class AnswerText
 
     private function __construct(string $text)
     {
-        if (empty(trim($text))) {
-            throw new InvalidArgumentException('Answer text cannot be empty.');
-        }
+        Assert::notEmpty($text);
         $this->text = $text;
     }
 

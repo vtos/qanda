@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\AnswerQuestion;
 
+use App\Domain\Common\AnswerText;
 use App\Models\Question as QuestionModel;
 
 final class AnswerQuestionHandler

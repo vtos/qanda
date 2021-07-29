@@ -124,7 +124,7 @@ class QandaInteractive extends Command
         $questionAnswer = $this->ask('<fg=white>Enter question answer</>');
 
         $this->createQuestionHandler->handle(
-            new CreateQuestion($questionText, $questionAnswer) // TODO: use value objects inside the class.
+            new CreateQuestion($questionText, $questionAnswer)
         );
         $this->info('Added successfully.');
     }
