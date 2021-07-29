@@ -66,156 +66,10 @@ class QandaInteractive extends Command
      */
     public function handle(): int
     {
-        // TODO: use white color for text as default.
-        $this->line('<fg=white>Welcome to Q&A App!</>');
-
-        // TODO: check if can be solved without array_search().
-
-        $options = $this->mainMenuOptions();
-        $optionText = $this->choice(
-            '<fg=white>Choose what you want to do</>',
-            $options
-        );
-        $optionValue = array_search($optionText, $options);
-
-        if (self::MAIN_MENU_CREATE_QUESTION_OPTION === $optionValue) {
-            $createQuestionInput = $this->createQuestionInput();
-
-            $this->createQuestionHandler->handle(
-                new CreateQuestion(
-                    $createQuestionInput['question_text'],
-                    $createQuestionInput['question_answer']
-                )
-            );
-            $this->line('Added successfully.');
-        }
-
-        if (self::MAIN_MENU_LIST_QUESTIONS_OPTION === $optionValue) {
-            $this->line('<fg=white>Q&A List</>');
-            $this->table(
-                [
-                    'Question Text',
-                    'Answer',
-                ],
-                Question::list()->get()
-            );
-
-        }
-
-        if (self::MAIN_MENU_PRACTICE_OPTION === $optionValue) {
-            $this->line('<fg=white>Let\'s practice!</>');
-            $this->newLine();
-            $this->line('<fg=white>Current progress:</>');
-
-            // TODO: put this into separate method.
-            $questions = Question::answers()->get();
-
-            $questionsAsArray = [];
-            $questionsNumIdMap = [];
-            $questionsNumTextMap = [];
-            foreach ($questions as $question) {
-                $questionNum = count($questionsAsArray) + 1;
-
-                $questionsNumIdMap[$questionNum] = $question->id;
-                $questionsNumTextMap[$questionNum] = $question->question_text;
-
-                $questionsAsArray[] = [
-                    $questionNum,
-                    $question->question_text,
-                    $question->attempt->user_answer,
-                    $question->attempt->status,
-                ];
-            }
-
-            $this->table(
-                [
-                    'Question Num.',
-                    'Question',
-                    'Your Answer',
-                    'Status',
-                ],
-                $questionsAsArray
-            );
-
-            $questionNumToPractice = null;
-            while (is_null($questionNumToPractice) || !array_key_exists($questionNumToPractice, $questionsNumIdMap)) {
-                $questionNumToPractice = $this->ask(
-                    '<fg=white>Pick a question to practice (enter question number from the table above)</>'
-                );
-                if (!in_array($questionNumToPractice, array_keys($questionsNumIdMap))) {
-                    $this->error('Unknown question selected.');
-                }
-            }
-
-            $questionAnswer = $this->ask(
-                sprintf(
-                '<fg=white>%s Type your answer</>',
-                    $questionsNumTextMap[$questionNumToPractice]
-                )
-            );
-
-            try {
-                $answerStatus = $this->answerQuestionHandler->handle(
-                    new AnswerQuestion(
-                        $questionsNumIdMap[$questionNumToPractice],
-                        $questionAnswer
-                    )
-                );
-
-                $this->info(
-                    sprintf(
-                        '<fg=%s>The answer is %s.</>',
-                        $answerStatus->isCorrect() ? 'green' : 'red',
-                        $answerStatus->asString()
-                    )
-                );
-            } catch (CouldNotAnswerQuestion $couldNotAnswerQuestion) {
-                $this->error($couldNotAnswerQuestion->getMessage());
-            }
-        }
-
-        if (self::MAIN_MENU_STATS_OPTION === $optionValue) {
-            $this->line('<fg=white>Stats</>');
-
-            $totalQuestions = Question::all()->count();
-
-            $answeredPercentage = Percentage::fromInts(
-                $totalQuestions,
-                QuestionAttempt::answeredCount()->count()
-            )->asInt();
-
-            $correctPercentage = Percentage::fromInts(
-                $totalQuestions,
-                QuestionAttempt::correctCount()->count(),
-            )->asInt();
-
-            $this->table(
-                [
-                    'Total number of questions',
-                    '% of questions with an answer',
-                    '% of questions with a correct answer',
-                ],
-                [
-                    [
-                        $totalQuestions,
-                        $answeredPercentage,
-                        $correctPercentage,
-                    ]
-                ]
-            );
-
-            $options = $this->mainMenuOptions();
-            $optionText = $this->choice(
-                '<fg=white>Choose what you want to do</>',
-                $options
-            );
-            $optionValue = array_search($optionText, $options);
-        }
-
-        if (self::MAIN_MENU_RESET_OPTION === $optionValue) {
-            $typed = $this->ask('Are you sure you want to reset the progress (type \'yes\' to confirm)?');
-            if ($typed === 'yes') {
-
+        $selectedOption = null;
+        while ($selectedOption !== self::MAIN_MENU_EXIT_OPTION) {
+            if ($selectedOption === null) {
+                $this->line('Welcome to Q&A App!');
             }
 
             $options = $this->mainMenuOptions();
@@ -223,13 +77,26 @@ class QandaInteractive extends Command
                 '<fg=white>Choose what you want to do</>',
                 $options
             );
+            $selectedOption = array_search($optionText, $options);
+
+            if (self::MAIN_MENU_CREATE_QUESTION_OPTION === $selectedOption) {
+                $this->handleCreateQuestion();
+            }
+            if (self::MAIN_MENU_LIST_QUESTIONS_OPTION === $selectedOption) {
+                $this->handleListQuestions();
+            }
+            if (self::MAIN_MENU_PRACTICE_OPTION === $selectedOption) {
+                $this->handlePractice();
+            }
+            if (self::MAIN_MENU_STATS_OPTION === $selectedOption) {
+                $this->handleStats();
+            }
+            if (self::MAIN_MENU_RESET_OPTION === $selectedOption) {
+                $this->handleReset();
+            }
         }
 
-        if (self::MAIN_MENU_EXIT_OPTION === $optionValue) {
-            $this->info('Bye!');
-
-            return 0;
-        }
+        $this->info('Bye!');
 
         return 0;
     }
@@ -251,20 +118,144 @@ class QandaInteractive extends Command
         ];
     }
 
-    /**
-     * Asks a user for question text and its answer in console and returns the input.
-     *
-     * @return array Array of two strings: question text and question answer,
-     * the keys are 'question_text' and 'question_answer' respectively.
-     */
-    private function createQuestionInput(): array
+    private function handleCreateQuestion(): void
     {
-        $questionText = $this->ask('Enter question text:');
-        $questionAnswer = $this->ask('Enter question answer:');
+        $questionText = $this->ask('<fg=white>Enter question text</>');
+        $questionAnswer = $this->ask('<fg=white>Enter question answer</>');
 
-        return [
-            'question_text' => $questionText,
-            'question_answer' => $questionAnswer,
-        ];
+        $this->createQuestionHandler->handle(
+            new CreateQuestion($questionText, $questionAnswer) // TODO: use value objects inside the class.
+        );
+        $this->info('Added successfully.');
+    }
+
+    private function handleListQuestions(): void
+    {
+        $this->line('Q&A List');
+        $this->table(
+            [
+                'Question Text',
+                'Answer',
+            ],
+            Question::list()->get()
+        );
+    }
+
+    private function handlePractice(): void
+    {
+        $this->line('Let\'s practice!');
+        $this->newLine();
+        $this->line('Current progress:');
+
+        // TODO: put this into separate method.
+        $questions = Question::answers()->get();
+
+        $questionsAsArray = [];
+        $questionsNumIdMap = [];
+        $questionsNumTextMap = [];
+        foreach ($questions as $question) {
+            $questionNum = count($questionsAsArray) + 1;
+
+            $questionsNumIdMap[$questionNum] = $question->id;
+            $questionsNumTextMap[$questionNum] = $question->question_text;
+
+            $questionsAsArray[] = [
+                $questionNum,
+                $question->question_text,
+                $question->attempt->user_answer,
+                $question->attempt->status,
+            ];
+        }
+
+        $this->table(
+            [
+                'Question Num.',
+                'Question',
+                'Your Answer',
+                'Status',
+            ],
+            $questionsAsArray
+        );
+
+        $questionNumToPractice = null;
+        while (is_null($questionNumToPractice) || !array_key_exists($questionNumToPractice, $questionsNumIdMap)) {
+            $questionNumToPractice = $this->ask(
+                '<fg=white>Pick a question to practice (enter question number from the table above or press Enter to return to the main menu)</>'
+            );
+            if ($questionNumToPractice === null) {
+                return;
+            }
+            if (!in_array($questionNumToPractice, array_keys($questionsNumIdMap))) {
+                $this->error('Unknown question selected.');
+            }
+        }
+
+        $questionAnswer = $this->ask(
+            sprintf(
+            '<fg=white>%s Type your answer</>',
+                $questionsNumTextMap[$questionNumToPractice]
+            )
+        );
+
+        try {
+            $answerStatus = $this->answerQuestionHandler->handle(
+                new AnswerQuestion(
+                    $questionsNumIdMap[$questionNumToPractice],
+                    $questionAnswer
+                )
+            );
+
+            $this->info(
+                sprintf(
+                    '<fg=%s>The answer is %s.</>',
+                    $answerStatus->isCorrect() ? 'green' : 'red',
+                    $answerStatus->asString()
+                )
+            );
+        } catch (CouldNotAnswerQuestion $couldNotAnswerQuestion) {
+            $this->error($couldNotAnswerQuestion->getMessage());
+        }
+    }
+
+    private function handleStats(): void
+    {
+        $this->line('Stats');
+
+        $totalQuestions = Question::all()->count();
+
+        $answeredPercentage = Percentage::fromInts(
+            $totalQuestions,
+            QuestionAttempt::answeredCount()->count()
+        )->asInt();
+
+        $correctPercentage = Percentage::fromInts(
+            $totalQuestions,
+            QuestionAttempt::correctCount()->count(),
+        )->asInt();
+
+        $this->table(
+            [
+                'Total number of questions',
+                '% of questions with an answer',
+                '% of questions with a correct answer',
+            ],
+            [
+                [
+                    $totalQuestions,
+                    $answeredPercentage,
+                    $correctPercentage,
+                ]
+            ]
+        );
+    }
+
+    private function handleReset(): void
+    {
+        $typed = $this->ask('<fg=yellow>Are you sure you want to reset the progress?</> <fg=white>(type \'yes\' to confirm)</>');
+        if ($typed !== 'yes') {
+            $this->info('Reset aborted.');
+            return;
+        }
+        $this->info('Deleted.');
     }
 }
