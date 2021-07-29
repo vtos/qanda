@@ -9,7 +9,9 @@ use App\Domain\AnswerQuestion\AnswerQuestionHandler;
 use App\Domain\AnswerQuestion\CouldNotAnswerQuestion;
 use App\Domain\CreateQuestion\CreateQuestion;
 use App\Domain\CreateQuestion\CreateQuestionHandler;
+use App\Domain\Stats\Percentage;
 use App\Models\Question;
+use App\Models\QuestionAttempt;
 use Illuminate\Console\Command;
 
 class QandaInteractive extends Command
@@ -170,6 +172,63 @@ class QandaInteractive extends Command
             } catch (CouldNotAnswerQuestion $couldNotAnswerQuestion) {
                 $this->error($couldNotAnswerQuestion->getMessage());
             }
+        }
+
+        if (self::MAIN_MENU_STATS_OPTION === $optionValue) {
+            $this->line('<fg=white>Stats</>');
+
+            $totalQuestions = Question::all()->count();
+
+            $answeredPercentage = Percentage::fromInts(
+                $totalQuestions,
+                QuestionAttempt::answeredCount()->count()
+            )->asInt();
+
+            $correctPercentage = Percentage::fromInts(
+                $totalQuestions,
+                QuestionAttempt::correctCount()->count(),
+            )->asInt();
+
+            $this->table(
+                [
+                    'Total number of questions',
+                    '% of questions with an answer',
+                    '% of questions with a correct answer',
+                ],
+                [
+                    [
+                        $totalQuestions,
+                        $answeredPercentage,
+                        $correctPercentage,
+                    ]
+                ]
+            );
+
+            $options = $this->mainMenuOptions();
+            $optionText = $this->choice(
+                '<fg=white>Choose what you want to do</>',
+                $options
+            );
+            $optionValue = array_search($optionText, $options);
+        }
+
+        if (self::MAIN_MENU_RESET_OPTION === $optionValue) {
+            $typed = $this->ask('Are you sure you want to reset the progress (type \'yes\' to confirm)?');
+            if ($typed === 'yes') {
+
+            }
+
+            $options = $this->mainMenuOptions();
+            $optionText = $this->choice(
+                '<fg=white>Choose what you want to do</>',
+                $options
+            );
+        }
+
+        if (self::MAIN_MENU_EXIT_OPTION === $optionValue) {
+            $this->info('Bye!');
+
+            return 0;
         }
 
         return 0;
