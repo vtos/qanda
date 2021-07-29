@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\AnswerQuestion;
 
-use InvalidArgumentException;
+use Webmozart\Assert\Assert;
 
 final class AnswerStatus
 {
@@ -18,21 +18,14 @@ final class AnswerStatus
 
     private function __construct(string $statusOption)
     {
-        if (!in_array(
+        Assert::inArray(
             $statusOption,
             [
                 self::NOT_ANSWERED,
                 self::CORRECT,
                 self::INCORRECT,
             ]
-        )) {
-            throw new InvalidArgumentException(
-                sprintf(
-                    'Unknown answer status option: %s',
-                    $statusOption
-                )
-            );
-        }
+        );
         $this->statusOption = $statusOption;
     }
 
