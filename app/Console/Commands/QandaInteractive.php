@@ -124,24 +124,43 @@ class QandaInteractive extends Command
 
     private function handleCreateQuestion(): void
     {
-        $questionText = $this->ask('<fg=white>Enter question text</>');
-        $questionAnswer = $this->ask('<fg=white>Enter question answer</>');
+        $questionText = $this->ask('<fg=white>Enter question text or press Enter to cancel</>');
+        if (is_null($questionText)) {
+            return;
+        }
+
+        $questionAnswer = null;
+        while (is_null($questionAnswer)) {
+            $questionAnswer = $this->ask('<fg=white>Enter question answer</>');
+            if (is_null($questionAnswer)) {
+                $this->error('Please, provide the answer.');
+            }
+        }
 
         $this->createQuestionHandler->handle(
             new CreateQuestion($questionText, $questionAnswer)
         );
         $this->info('Added successfully.');
+        $this->newLine();
     }
 
     private function handleListQuestions(): void
     {
+        $questions =Question::list()->get();
+        if ($questions->isEmpty()) {
+            $this->line('No questions added yet.');
+            $this->newLine();
+
+            return;
+        }
+
         $this->line('Q&A List');
         $this->table(
             [
                 'Question Text',
                 'Answer',
             ],
-            Question::list()->get()
+            $questions
         );
     }
 
@@ -153,11 +172,18 @@ class QandaInteractive extends Command
      */
     private function handlePractice(): int
     {
+        $questionsCollection = Question::withAttempts()->get();
+        if ($questionsCollection->isEmpty()) {
+            $this->line('No questions added yet, nothing to practice, sorry.');
+            $this->newLine();
+
+            // Go to main menu.
+            return 0;
+        }
+
         $this->line('Let\'s practice!');
         $this->newLine();
         $this->line('Current progress:');
-
-        $questionsCollection = Question::withAttempts()->get();
 
         // This map is needed to match the selected question number with its id
         // which is required for further manipulations.
@@ -205,8 +231,10 @@ class QandaInteractive extends Command
                 // Cancel practice.
                 return 0;
             }
+
             if (!in_array($questionNumToPractice, array_keys($questionsNumIdMap))) {
                 $this->error('Unknown question selected.');
+                continue;
             }
 
             $questionToPractice = Question::with('attempt')->findOrFail($questionsNumIdMap[$questionNumToPractice]);
