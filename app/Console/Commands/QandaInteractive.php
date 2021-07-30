@@ -185,7 +185,7 @@ class QandaInteractive extends Command
             $questions,
             sprintf(
                 '%s%% (%s / %s)',
-                Percentage::fromInts($totalQuestions, $correctAnswersTotal)->asInt(),
+                Percentage::fromInts($totalQuestions, $correctAnswersTotal)->asRoundedInt(),
                 $correctAnswersTotal,
                 $totalQuestions
             )
@@ -260,12 +260,12 @@ class QandaInteractive extends Command
         $answeredPercentage = Percentage::fromInts(
             $totalQuestions,
             QuestionAttempt::whereAnswered()->count()
-        )->asInt();
+        )->asRoundedInt();
 
         $correctPercentage = Percentage::fromInts(
             $totalQuestions,
             QuestionAttempt::whereHasCorrectAnswer()->count(),
-        )->asInt();
+        )->asRoundedInt();
 
         $this->table(
             [

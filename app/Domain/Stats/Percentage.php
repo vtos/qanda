@@ -14,16 +14,20 @@ final class Percentage
 
     private function __construct(int $total, int $amount)
     {
-        Assert::greaterThanEq($total, 0);
-        Assert::greaterThanEq($amount, 0);
-        Assert::lessThanEq($amount, $total);
+        Assert::greaterThanEq($total, 0, 'Total cannot be negative.');
+        Assert::greaterThanEq($amount, 0, 'Amount cannot be negative.');
+        Assert::lessThanEq($amount, $total, 'Amount cannot be greater than total.');
 
         $this->total = $total;
         $this->amount = $amount;
     }
 
-    public function asInt(): int {
-        return (int)ceil(
+    public function asRoundedInt(): int {
+        if (0 === $this->amount || 0 === $this->total) {
+            return 0;
+        }
+
+        return (int)round(
             $this->amount * 100 / $this->total
         );
     }
