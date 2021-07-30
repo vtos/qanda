@@ -8,8 +8,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class QuestionFactory extends Factory
 {
     /**
-     * The name of the factory's corresponding model.
-     *
      * @var string
      */
     protected $model = Question::class;
@@ -23,7 +21,7 @@ class QuestionFactory extends Factory
     {
         return [
             'question_text' => $this->faker->text(100),
-            'question_answer' => $this->faker->text(12),
+            'question_answer' => $this->faker->text(10),
         ];
     }
 }
