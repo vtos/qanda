@@ -48,13 +48,6 @@ class Question extends Model
      */
     public function scopeWithAttempts(Builder $query): Builder
     {
-        return $query->with('attempt')->select(
-            [
-                'id',
-                'question_text',
-                'user_answer',
-                'status',
-            ]
-        );
+        return $query->with('attempt:id,user_answer,status,question_id');
     }
 }
