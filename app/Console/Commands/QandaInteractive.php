@@ -79,7 +79,13 @@ class QandaInteractive extends Command
                 '<fg=white>Choose what you want to do</>',
                 $options
             );
-            $selectedOption = array_search($optionText, $options);
+
+            // For some reason when running tests Laravel handles this output differently,
+            // the choice()'s output contains the selected option itself, not the option text.
+            // That's why handling for both cases.
+            $selectedOption = array_key_exists((int)$optionText, $options)
+                ? (int)$optionText
+                : array_search($optionText, $options);
 
             if (self::MAIN_MENU_CREATE_QUESTION_OPTION === $selectedOption) {
                 $this->handleCreateQuestion();
