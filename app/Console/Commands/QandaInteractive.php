@@ -195,7 +195,7 @@ class QandaInteractive extends Command
         // which is required for further manipulations.
         $questionsNumIdMap = $questionsCollection->mapWithKeys(function($item, $key) {
             return [
-                $item->id => $key + 1,
+                ($key + 1) => $item->id,
             ];
         })->toArray();
 
