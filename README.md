@@ -1,62 +1,49 @@
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Q&A app made with Laravel + Artisan
 
-## About Laravel
+Welcome to Q&A app made with Laravel! This guide contains instruction to run the app using Docker and also some reasoning
+on approaches which were used to implement it.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Running with Docker
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+1. Run ```git clone``` to clone the repository.
+2. Create ```.env``` and ```.env.testing``` files in the project root. Make use of ```.env.example```
+and ```.env.testing.example``` to create those files. Make sure to fill ```DB_USERNAME```, ```DB_PASSWORD```, ```TEST_DB_USERNAME```,
+and ```TEST_DB_PASSWORD``` values in ```.env```, and also ```DB_USERNAME``` and ```DB_PASSWORD``` in ```.env.testing```
+file. **Important!** Make sure ```DB_USERNAME``` and ```DB_PASSWORD``` in ```.env.testing``` equal the corresponding values of
+```TEST_DB_USERNAME``` and ```TEST_DB_PASSWORD``` in ```.env```.
+3. ```cd``` into the project root and run ```docker-compose up -d```
+4. Run ```docker-compose run --rm composer install``` to install the dependencies. From now on we can use Laravel Sail
+to run commands in the container.
+5. Run ```./vendor/bin/sail php artisan migrate``` to install the database.
+6. Run ```./vendor/bin/sail php artisan test``` to run the tests.
+7. Run ```./vendor/bin/sail php artisan qanda:interactive``` to run the console app.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Some thoughts on the project
 
-## Learning Laravel
+Being a fan of Domain Driven Design from recently I tried to introduce this approach to the project. Though,
+the current implementation isn't a full-featured version of DDD (the project is obviously too small for it), it contains
+just several concepts from it here like introducing the domain of the application, using value objects, data transfer
+objects and applying command-and-handler pattern to implement essential domain processes (like creating or answering
+a question). The main purpose is to demonstrate an approach when the business logic of the application can be separated
+from Laravel models, which allows for cleaner code in models, code re-use and writing unit tests which are not bound
+to a certain database.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+The project doesn't introduce a user model to allow for unlimited number of users to use the application. This could be
+the next step in development of the app. Currently, question model and question attempt model have a 'one-to-one'
+relation defined. It means that the use who creates a question can practice it himself then. It would be quite logical
+to introduce roles to allow for question creation by a dedicated user (aka the admin), while other users can only
+practice the questions created.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 1500 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Although the current version of the app operates via CLI only, the database flow is built with an 'HTTP mindset'.
+It means that it contains numerous database queries which are unnecessary when the app runs in CLI mode.
+It would be wise to introduce one more data storage layer for this specific CLI case to allow for storing the data
+in memory while the app runs in CLI, instead of querying the database each time we need some data. But the current
+app version doesn't implement this layer.
 
-## Laravel Sponsors
+The project is bundled with three types of tests: unit, feature and end-to-end. End-to-end contain only one test
+which tests some actions performed by a user via CLI, the coverage isn't 100%.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
-
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Project files contain some inline comments and PHPDoc Blocks to clarify some decisions used, though it doesn't have
+100%-coverage, so I would be happy to answer any questions on the project structure.

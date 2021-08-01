@@ -6,6 +6,9 @@ namespace App\Domain\AnswerQuestion;
 
 use Webmozart\Assert\Assert;
 
+/**
+ * A value object describing the status property of a given answer.
+ */
 final class AnswerStatus
 {
     private const NOT_ANSWERED = 'not_answered';

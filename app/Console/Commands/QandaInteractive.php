@@ -329,6 +329,9 @@ class QandaInteractive extends Command
         $this->info('Deleted the progress.');
     }
 
+    /**
+     * Overriding the basic table to have a beautiful footer with the progress data.
+     */
     private function progressTable(array $rows, string $footer): void
     {
         $table = new Table($this->output);
