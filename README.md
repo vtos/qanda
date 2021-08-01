@@ -7,15 +7,15 @@ on approaches which were used to implement it.
 
 ## Running with Docker
 
-1. Run ```git clone``` to clone the repository.
-2. Create ```.env``` and ```.env.testing``` files in the project root. Make use of ```.env.example```
+1. Run ```git clone https://github.com/vtos/laravel-qanda.git qanda``` to clone the repository.
+2. ```cd``` into the created ```qanda``` dir. Create ```.env``` and ```.env.testing``` files in the project root. Make use of ```.env.example```
 and ```.env.testing.example``` to create those files. Make sure to fill ```DB_USERNAME```, ```DB_PASSWORD```, ```TEST_DB_USERNAME```,
 and ```TEST_DB_PASSWORD``` values in ```.env```, and also ```DB_USERNAME``` and ```DB_PASSWORD``` in ```.env.testing```
 file. **Important!** Make sure ```DB_USERNAME``` and ```DB_PASSWORD``` in ```.env.testing``` equal the corresponding values of
 ```TEST_DB_USERNAME``` and ```TEST_DB_PASSWORD``` in ```.env```.
-3. ```cd``` into the project root and run ```docker-compose up -d```
-4. Run ```docker-compose run --rm composer install``` to install the dependencies. From now on we can use Laravel Sail
-to run commands in the container.
+3. Run Composer's ```install``` to install the dependencies. From now on we can use Laravel Sail
+   to run commands in the container.
+4. Run ```./vendor/bin/sail up```.
 5. Run ```./vendor/bin/sail php artisan migrate``` to install the database.
 6. Run ```./vendor/bin/sail php artisan test``` to run the tests.
 7. Run ```./vendor/bin/sail php artisan qanda:interactive``` to run the console app.
