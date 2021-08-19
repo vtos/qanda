@@ -289,7 +289,7 @@ class QandaInteractive extends Command
     {
         $this->line('Stats');
 
-        $totalQuestions = Question::all()->count();
+        $totalQuestions = Question::count();
 
         $answeredPercentage = Percentage::fromInts(
             $totalQuestions,
