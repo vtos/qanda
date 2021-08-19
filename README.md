@@ -2,7 +2,12 @@
 
 ## Q&A app made with Laravel + Artisan
 
-Welcome to Q&A app made with Laravel! This guide contains instruction to run the app using Docker and also some reasoning
+Welcome to Q&A app made with Laravel! This app works in CLI only, though can be extended to use any interface
+(like web or API) due to its decoupled (as much as possible) architecture. The essence of this app is creating questions
+and answering them. This is not a full-blown Q&A app, it's a playground to practice some approaches though it's working
+and can be tried using Docker.
+
+The following guide contains instruction to run the app using Docker and also some reasoning
 on approaches which were used to implement it.
 
 ## Running with Docker
@@ -25,7 +30,7 @@ file. **Important!** Make sure ```DB_USERNAME``` and ```DB_PASSWORD``` in ```.en
 Being a fan of Domain Driven Design from recently I tried to introduce this approach to the project. Though,
 the current implementation isn't a full-featured version of DDD (the project is obviously too small for it), it contains
 just several concepts from it here like introducing the domain of the application, using value objects, data transfer
-objects and applying command-and-handler pattern to implement essential domain processes (like creating or answering
+objects and applying command-handler pattern to implement essential domain processes (like creating or answering
 a question). The main purpose is to demonstrate an approach when the business logic of the application can be separated
 from Laravel models, which allows for cleaner code in models, code re-use and writing unit tests which are not bound
 to a certain database.
@@ -44,6 +49,3 @@ app version doesn't implement this layer.
 
 The project is bundled with three types of tests: unit, feature and end-to-end. End-to-end contain only one test
 which tests some actions performed by a user via CLI, the coverage isn't 100%.
-
-Project files contain some inline comments and PHPDoc Blocks to clarify some decisions used, though it doesn't have
-100%-coverage, so I would be happy to answer any questions on the project structure.
